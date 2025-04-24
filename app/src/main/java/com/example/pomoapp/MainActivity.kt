@@ -5,12 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -29,8 +31,13 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun PomoApp() {
+    var inputMinutes by remember { mutableStateOf("25") }
     var timeLeft by remember { mutableIntStateOf(25 * 60) }
     var isRunning by remember { mutableStateOf(false) }
+
+    val parsedMinutes = inputMinutes.toIntOrNull() ?: 25
+    val minutes = timeLeft / 60
+    val seconds = timeLeft % 60
 
     LaunchedEffect(isRunning) {
         while (isRunning && timeLeft > 0) {
@@ -40,53 +47,72 @@ fun PomoApp() {
 
     }
 
-    val minutes = timeLeft / 60
-    val seconds = timeLeft % 60
-
     Column(
         modifier = Modifier
             .fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE83944)),
+        // Time Input
+        OutlinedTextField(
+            value = inputMinutes,
+            onValueChange = { inputMinutes = it },
+            label = { Text("Set Focus Time (min)") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
             modifier = Modifier
                 .padding(16.dp)
-                .fillMaxWidth()
-        ) {
+        )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = String.format(Locale.US, "%02d:%02d", minutes, seconds),
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
+        Spacer(modifier = Modifier.height(16.dp))
 
-        }
+        // Timer Display
+        TimerCard(minutes, seconds)
 
 
         Spacer(modifier = Modifier.height(24.dp))
 
         TimerControls(
             isRunning = isRunning,
-            onStartPause = { isRunning = !isRunning },
+            onStartPause = {
+                if (!isRunning) {
+                    timeLeft = parsedMinutes * 60
+                }
+                isRunning = !isRunning
+            },
             onReset = {
-                timeLeft = 25 * 60
                 isRunning = false
+                timeLeft = parsedMinutes * 60
             }
         )
+    }
+}
+
+@Composable
+fun TimerCard(minutes: Int, seconds: Int) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFE83944)),
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxWidth()
+    ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = String.format(Locale.US, "%02d:%02d", minutes, seconds),
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
     }
 }
 
