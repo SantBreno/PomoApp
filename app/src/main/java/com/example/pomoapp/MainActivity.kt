@@ -29,24 +29,46 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+enum class TimerMode {
+    WORK,
+    BREAK
+}
+
 @Composable
 fun PomoApp() {
-    var inputMinutes by remember { mutableStateOf("25") }
-    var timeLeft by remember { mutableIntStateOf(25 * 60) }
+    var focusInput by remember { mutableStateOf("25") }
+    var breakInput by remember { mutableStateOf("5") }
+
+    val focusMinutes = focusInput.toIntOrNull()?.coerceIn(1, 90) ?: 25
+    val maxBreakMinutes = (focusMinutes - 1).coerceAtLeast(1)
+    val breakMinutes = breakInput.toIntOrNull()?.coerceIn(1, maxBreakMinutes) ?: 5
+
+    var mode by remember { mutableStateOf(TimerMode.WORK) }
+    var timeLeft by remember { mutableIntStateOf(focusMinutes * 60) }
     var isRunning by remember { mutableStateOf(false) }
 
-    val parsedMinutes = inputMinutes.toIntOrNull()?.coerceIn(1, 90) ?: 25
     val minutes = timeLeft / 60
     val seconds = timeLeft % 60
+    val cardColor = if (mode == TimerMode.WORK) Color(0xFFE83944) else Color(0xFF81D4FA)
 
+    // When mode changes, reset the timer based on the mode
+    LaunchedEffect(isRunning) {
+        timeLeft = if (mode == TimerMode.WORK) focusMinutes * 60 else breakMinutes * 60
+    }
 
+    // Timer CountDown Logic
     LaunchedEffect(isRunning) {
         while (isRunning && timeLeft > 0) {
             delay(1000)
             timeLeft--
         }
+        if (timeLeft == 0) {
+            isRunning = false
+            mode = if (mode == TimerMode.WORK) TimerMode.BREAK else TimerMode.WORK
 
+        }
     }
+
 
     Column(
         modifier = Modifier
@@ -54,15 +76,20 @@ fun PomoApp() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Time Input
+        // Inputs
         OutlinedTextField(
-            value = inputMinutes,
-            onValueChange = {
-                if (it.all { char-> char.isDigit() } && it.length <= 2) {
-                    inputMinutes = it
-                }
-            },
-            label = { Text("Set Focus Time (1-90min)") },
+            value = focusInput,
+            onValueChange = { focusInput = it },
+            label = { Text("Set Focus Time (min)") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+            modifier = Modifier
+                .padding(16.dp)
+        )
+        OutlinedTextField(
+            value = breakInput,
+            onValueChange = { breakInput = it },
+            label = { Text("Set Break Time (min)") },
             singleLine = true,
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
             modifier = Modifier
@@ -72,33 +99,37 @@ fun PomoApp() {
         Spacer(modifier = Modifier.height(16.dp))
 
         // Timer Display
-        TimerCard(minutes, seconds)
+        TimerCard(minutes, seconds,cardColor)
 
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // CONTROLS
+
         TimerControls(
             isRunning = isRunning,
             onStartPause = {
-                if (!isRunning) {
-                    timeLeft = parsedMinutes * 60
+                if (!isRunning && timeLeft == 0) {
+                    timeLeft = if (mode == TimerMode.WORK) focusMinutes * 60 else breakMinutes * 60
                 }
                 isRunning = !isRunning
             },
             onReset = {
                 isRunning = false
-                timeLeft = parsedMinutes * 60
+                timeLeft = if (mode == TimerMode.WORK) focusMinutes * 60 else breakMinutes * 60
             }
         )
+            }
+
     }
-}
+
 
 @Composable
-fun TimerCard(minutes: Int, seconds: Int) {
+fun TimerCard(minutes: Int, seconds: Int, cardColor: Color) {
     Card(
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFE83944)),
+        colors = CardDefaults.cardColors(containerColor = cardColor),
         modifier = Modifier
             .padding(16.dp)
             .fillMaxWidth()
