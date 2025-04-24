@@ -42,7 +42,7 @@ fun PomoApp() {
 
     val minutes = timeLeft / 60
     val seconds = timeLeft % 60
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize(),
@@ -79,18 +79,43 @@ fun PomoApp() {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Row(
-
-        ) {
-            Button(onClick = { isRunning = !isRunning }) {
-                Text(if (isRunning) "Pause" else "Start")
+        TimerControls(
+            isRunning = isRunning,
+            onStartPause = { isRunning = !isRunning },
+            onReset = {
+                timeLeft = 25 * 60
+                isRunning = false
             }
-        }
+        )
+    }
+}
 
+@Composable
+fun TimerControls(
+    isRunning: Boolean,
+    onStartPause: () -> Unit,
+    onReset: () -> Unit
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        StartPauseButton(isRunning, onStartPause)
+        ResetButton(onReset)
+    }
+}
+
+@Composable
+fun StartPauseButton(isRunning: Boolean, onClick: () -> Unit) {
+    Button(onClick = onClick) {
+        Text(if (isRunning) "Pause" else "Start")
+    }
+}
+
+@Composable
+fun ResetButton(onClick: () -> Unit) {
+    Button(onClick = onClick) {
+        Text("Reset")
     }
 
 }
-
 
 
 @Preview(showBackground = true)
