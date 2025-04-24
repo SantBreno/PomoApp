@@ -35,9 +35,10 @@ fun PomoApp() {
     var timeLeft by remember { mutableIntStateOf(25 * 60) }
     var isRunning by remember { mutableStateOf(false) }
 
-    val parsedMinutes = inputMinutes.toIntOrNull() ?: 25
+    val parsedMinutes = inputMinutes.toIntOrNull()?.coerceIn(1, 90) ?: 25
     val minutes = timeLeft / 60
     val seconds = timeLeft % 60
+
 
     LaunchedEffect(isRunning) {
         while (isRunning && timeLeft > 0) {
@@ -56,8 +57,12 @@ fun PomoApp() {
         // Time Input
         OutlinedTextField(
             value = inputMinutes,
-            onValueChange = { inputMinutes = it },
-            label = { Text("Set Focus Time (min)") },
+            onValueChange = {
+                if (it.all { char-> char.isDigit() } && it.length <= 2) {
+                    inputMinutes = it
+                }
+            },
+            label = { Text("Set Focus Time (1-90min)") },
             singleLine = true,
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
             modifier = Modifier
