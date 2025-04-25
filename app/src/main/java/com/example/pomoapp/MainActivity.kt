@@ -55,15 +55,16 @@ enum class TimerMode {
 
 @Composable
 fun PomoApp() {
+    // State variables
     var focusInput by remember { mutableStateOf("25") }
     var breakInput by remember { mutableStateOf("5") }
     var sessionsPassed by remember { mutableIntStateOf(0) }
-
 
     val focusMinutes = focusInput.toIntOrNull()?.coerceIn(1, 90) ?: 25
     val maxBreakMinutes = (focusMinutes - 1).coerceAtLeast(1)
     val breakMinutes = breakInput.toIntOrNull()?.coerceIn(1, maxBreakMinutes) ?: 5
 
+    // Timer variables
     var mode by remember { mutableStateOf(TimerMode.WORK) }
     var timeLeft by remember { mutableIntStateOf(focusMinutes * 60) }
     var isRunning by remember { mutableStateOf(false) }
@@ -93,6 +94,13 @@ fun PomoApp() {
             timeLeft = if (mode == TimerMode.WORK) focusMinutes * 60 else breakMinutes * 60
         }
     }
+    // When focus or break time changes, reset the timer
+    LaunchedEffect(focusMinutes, breakMinutes, mode) {
+        if (!isRunning) {
+            timeLeft = if (mode == TimerMode.WORK) focusMinutes * 60 else breakMinutes * 60
+        }
+    }
+
 
     Column(
         modifier = Modifier
@@ -100,6 +108,9 @@ fun PomoApp() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Current Mode Message
+        ModeMessage(mode, isRunning)
+
         // Inputs
         OutlinedTextField(
             value = focusInput,
@@ -125,18 +136,8 @@ fun PomoApp() {
         // Timer Display
         TimerCard(minutes, seconds,cardColor)
 
-        Spacer(modifier = Modifier.height(10.dp))
-
-        Row(modifier = Modifier
-        ) {
-            Text(
-                text = "Sessions Completed: $sessionsPassed",
-                fontSize = 16.sp,
-                modifier = Modifier.padding(top = 8.dp),
-                color = Color.Gray
-            )
-        }
-
+        // Completed Sessions Counter (1 Work Session + 1 Break Session)
+        SessionCounter(sessionsPassed)
         Spacer(modifier = Modifier.height(10.dp))
 
         // CONTROLS
@@ -157,6 +158,40 @@ fun PomoApp() {
             }
 
     }
+@Composable
+fun ModeMessage(mode: TimerMode, isRunning: Boolean) {
+    if (!isRunning) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("POMOTIMER", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text("START WORKING", fontSize = 20.sp, color = Color.Gray)
+        }
+    } else {
+        val message = when (mode) {
+            TimerMode.WORK -> "IT'S TIME TO FOCUS"
+            TimerMode.BREAK -> "LET'S TAKE A BREAK"
+        }
+
+        Text(
+            text = message,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFFE83944)
+        )
+    }
+}
+
+@Composable
+fun SessionCounter(sessionsPassed: Int) {
+    Row(modifier = Modifier
+    ) {
+        Text(
+            text = "Sessions Completed: $sessionsPassed",
+            fontSize = 16.sp,
+            modifier = Modifier.padding(top = 8.dp),
+            color = Color.Gray
+        )
+    }
+}
 
 
 @Composable
