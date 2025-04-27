@@ -1,6 +1,10 @@
 package com.example.pomoapp
 
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.VibratorManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
@@ -30,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import java.util.Locale
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,9 +64,12 @@ fun PomoApp() {
     var breakInput by remember { mutableStateOf("5") }
     var sessionsPassed by remember { mutableIntStateOf(0) }
 
+    // Input validation
     val focusMinutes = focusInput.toIntOrNull()?.coerceIn(1, 90) ?: 25
     val maxBreakMinutes = (focusMinutes - 1).coerceAtLeast(1)
     val breakMinutes = breakInput.toIntOrNull()?.coerceIn(1, maxBreakMinutes) ?: 5
+
+    val context = LocalContext.current
 
     // Timer variables
     var mode by remember { mutableStateOf(TimerMode.WORK) }
@@ -85,6 +92,9 @@ fun PomoApp() {
 
             // Switch mode
             mode = if (mode == TimerMode.WORK) TimerMode.BREAK else TimerMode.WORK
+
+            // Vibrate when the timer hits 0
+             context.triggerVibration()
 
             // Increment sessions passed
             if (mode == TimerMode.WORK) {
@@ -158,6 +168,18 @@ fun PomoApp() {
             }
 
     }
+
+fun Context.triggerVibration() {
+    // Check if the device is running on Android 12 (API level 31) or higher
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        // Use the VibratorManager for devices running Android 12 or higher
+        val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+        val vibrator = vibratorManager.defaultVibrator
+        val vibrationEffect = VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
+        vibrator.vibrate(vibrationEffect)
+    }
+}
+
 @Composable
 fun ModeMessage(mode: TimerMode, isRunning: Boolean) {
     if (!isRunning) {
