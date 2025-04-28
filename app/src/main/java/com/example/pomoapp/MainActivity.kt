@@ -63,6 +63,7 @@ fun PomoApp() {
     var focusInput by remember { mutableStateOf("25") }
     var breakInput by remember { mutableStateOf("5") }
     var sessionsPassed by remember { mutableIntStateOf(0) }
+    var hasStarted by remember { mutableStateOf(false) }
 
     // Input validation
     val focusMinutes = focusInput.toIntOrNull()?.coerceIn(1, 90) ?: 25
@@ -119,7 +120,7 @@ fun PomoApp() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Current Mode Message
-        ModeMessage(mode, isRunning)
+        ModeMessage(mode, isRunning, hasStarted)
 
         // Inputs
         OutlinedTextField(
@@ -144,7 +145,9 @@ fun PomoApp() {
         Spacer(modifier = Modifier.height(10.dp))
 
         // Timer Display
-        TimerCard(minutes, seconds,cardColor)
+        if (hasStarted) {
+            TimerCard(minutes, seconds,cardColor)
+         }
 
         // Completed Sessions Counter (1 Work Session + 1 Break Session)
         SessionCounter(sessionsPassed)
@@ -157,6 +160,9 @@ fun PomoApp() {
             onStartPause = {
                 if (!isRunning && timeLeft == 0) {
                     timeLeft = if (mode == TimerMode.WORK) focusMinutes * 60 else breakMinutes * 60
+                }
+                if (!hasStarted) {
+                    hasStarted = true
                 }
                 isRunning = !isRunning
             },
@@ -181,24 +187,24 @@ fun Context.triggerVibration() {
 }
 
 @Composable
-fun ModeMessage(mode: TimerMode, isRunning: Boolean) {
-    if (!isRunning) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("POMOTIMER", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Text("START WORKING", fontSize = 20.sp, color = Color.Gray)
-        }
-    } else {
-        val message = when (mode) {
-            TimerMode.WORK -> "IT'S TIME TO FOCUS"
-            TimerMode.BREAK -> "LET'S TAKE A BREAK"
-        }
+fun ModeMessage(mode: TimerMode, isRunning: Boolean, hasStarted: Boolean) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        when {
+            !hasStarted -> {
+                Text("POMOTIMER", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text("START WORKING", fontSize = 20.sp, color = Color.Gray)
+            }
+            isRunning && mode == TimerMode.WORK -> {
+                Text("IT'S TIME TO FOCUS", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+            }
+            isRunning && mode == TimerMode.BREAK -> {
+                Text("GREAT, LET'S TAKE BREAK", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+            }
+            !isRunning -> {
+                Text("TIMER PAUSED", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+            }
 
-        Text(
-            text = message,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFFE83944)
-        )
+        }
     }
 }
 
