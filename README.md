@@ -19,7 +19,7 @@ Helps you stay productive by managing your work and break sessions effectively.
 ## 📸 Screenshots
 
 MainScreen | Focus Time | Break Time 
-| --- | --- | --- 
+ --- | --- | --- 
 ![](app/assets/MainScreen.png) | ![](app/assets/FocusScreen.png) | ![](app/assets/BreakScreen.png) 
 
 
