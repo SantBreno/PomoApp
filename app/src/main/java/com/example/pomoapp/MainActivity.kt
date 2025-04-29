@@ -7,6 +7,8 @@ import android.os.VibrationEffect
 import android.os.VibratorManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,7 +25,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -63,6 +67,7 @@ fun PomoApp() {
     var focusInput by remember { mutableStateOf("25") }
     var breakInput by remember { mutableStateOf("5") }
     var sessionsPassed by remember { mutableIntStateOf(0) }
+    var hasStarted by remember { mutableStateOf(false) }
 
     // Input validation
     val focusMinutes = focusInput.toIntOrNull()?.coerceIn(1, 90) ?: 25
@@ -76,15 +81,54 @@ fun PomoApp() {
     var timeLeft by remember { mutableIntStateOf(focusMinutes * 60) }
     var isRunning by remember { mutableStateOf(false) }
 
+
     val minutes = timeLeft / 60
     val seconds = timeLeft % 60
-    val cardColor = if (mode == TimerMode.WORK) Color(0xFFE83944) else Color(0xFF81D4FA)
+    val cardColor = Color.White
+    val backgroundColor by animateColorAsState(
+        targetValue = when {
+            !hasStarted -> Color.White
+            mode == TimerMode.WORK -> Color(0xFFE83944)
+            mode == TimerMode.BREAK -> Color(0XFF003D5F)
+            else -> Color.White
+        },
+        animationSpec = tween(durationMillis = 1000)
+    )
+
+    val textFieldColors = TextFieldDefaults.colors(
+        focusedContainerColor = Color.Transparent,
+        unfocusedContainerColor = Color.Transparent,
+        focusedTextColor = when {
+            !hasStarted -> Color.Black
+            mode == TimerMode.WORK -> Color.White
+            mode == TimerMode.BREAK -> Color.White
+            else -> Color.Black
+        },
+        unfocusedTextColor = when {
+            !hasStarted -> Color.Black
+            mode == TimerMode.WORK -> Color.White
+            mode == TimerMode.BREAK -> Color.White
+            else -> Color.Black
+        },
+        focusedIndicatorColor = when {
+            !hasStarted -> Color.Black
+            mode == TimerMode.WORK -> Color.White
+            mode == TimerMode.BREAK -> Color.White
+            else -> Color.Black
+        },
+        unfocusedIndicatorColor = when {
+            !hasStarted -> Color.Black
+            mode == TimerMode.WORK -> Color.White
+            mode == TimerMode.BREAK -> Color.White
+            else -> Color.Black
+        }
+    )
 
     // When mode changes, reset the timer based on the mode
     // Timer CountDown Logic
     LaunchedEffect(isRunning) {
         while (isRunning && timeLeft > 0) {
-            delay(1000)
+            delay(100)
             timeLeft--
         }
         if (timeLeft == 0 && isRunning) {
@@ -111,63 +155,93 @@ fun PomoApp() {
         }
     }
 
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Current Mode Message
-        ModeMessage(mode, isRunning)
-
-        // Inputs
-        OutlinedTextField(
-            value = focusInput,
-            onValueChange = { focusInput = it },
-            label = { Text("Set Focus Time (min)") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+    Surface (
+        modifier = Modifier.fillMaxSize(),
+        color = backgroundColor
+    ){
+        Column(
             modifier = Modifier
-                .padding(16.dp)
-        )
-        OutlinedTextField(
-            value = breakInput,
-            onValueChange = { breakInput = it },
-            label = { Text("Set Break Time (min)") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-            modifier = Modifier
-                .padding(16.dp)
-        )
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Current Mode Message
+            ModeMessage(mode, isRunning, hasStarted)
 
-        Spacer(modifier = Modifier.height(10.dp))
+            // Inputs
+            OutlinedTextField(
+                value = focusInput,
+                onValueChange = { focusInput = it },
+                label = { Text(
+                    "Set Focus Time (min)",
+                    color = when {
+                        !hasStarted -> Color.Black
+                        mode == TimerMode.WORK -> Color.White
+                        mode == TimerMode.BREAK -> Color.White
+                        else -> Color.Black
+                    }
+                )},
+                singleLine = true,
+                shape = RoundedCornerShape(8.dp),
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                colors = textFieldColors,
+                modifier = Modifier
+                    .padding(16.dp)
+            )
+            OutlinedTextField(
+                value = breakInput,
+                onValueChange = { breakInput = it },
+                label = { Text(
+                    "Set Break Time (min)",
+                    color = when {
+                        !hasStarted -> Color.Black
+                        mode == TimerMode.WORK -> Color.White
+                        mode == TimerMode.BREAK -> Color.White
+                        else -> Color.Black
+                    }
+                )},
+                singleLine = true,
+                shape = RoundedCornerShape(8.dp),
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                colors = textFieldColors,
+                modifier = Modifier
+                    .padding(16.dp)
+            )
 
-        // Timer Display
-        TimerCard(minutes, seconds,cardColor)
+            Spacer(modifier = Modifier.height(10.dp))
 
-        // Completed Sessions Counter (1 Work Session + 1 Break Session)
-        SessionCounter(sessionsPassed)
-        Spacer(modifier = Modifier.height(10.dp))
+            // Timer Display
+            if (hasStarted) {
+                TimerCard(minutes, seconds,cardColor)
+            }
 
-        // CONTROLS
+            // Completed Sessions Counter (1 Work Session + 1 Break Session)
+            SessionCounter(sessionsPassed)
+            Spacer(modifier = Modifier.height(10.dp))
 
-        TimerControls(
-            isRunning = isRunning,
-            onStartPause = {
-                if (!isRunning && timeLeft == 0) {
+            // CONTROLS
+
+            TimerControls(
+                isRunning = isRunning,
+                onStartPause = {
+                    if (!isRunning && timeLeft == 0) {
+                        timeLeft = if (mode == TimerMode.WORK) focusMinutes * 60 else breakMinutes * 60
+                    }
+                    if (!hasStarted) {
+                        hasStarted = true
+                    }
+                    isRunning = !isRunning
+                },
+                onReset = {
+                    isRunning = false
                     timeLeft = if (mode == TimerMode.WORK) focusMinutes * 60 else breakMinutes * 60
                 }
-                isRunning = !isRunning
-            },
-            onReset = {
-                isRunning = false
-                timeLeft = if (mode == TimerMode.WORK) focusMinutes * 60 else breakMinutes * 60
-            }
-        )
-            }
+            )
+        }
 
     }
+}
+
 
 fun Context.triggerVibration() {
     // Check if the device is running on Android 12 (API level 31) or higher
@@ -181,24 +255,24 @@ fun Context.triggerVibration() {
 }
 
 @Composable
-fun ModeMessage(mode: TimerMode, isRunning: Boolean) {
-    if (!isRunning) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("POMOTIMER", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Text("START WORKING", fontSize = 20.sp, color = Color.Gray)
-        }
-    } else {
-        val message = when (mode) {
-            TimerMode.WORK -> "IT'S TIME TO FOCUS"
-            TimerMode.BREAK -> "LET'S TAKE A BREAK"
-        }
+fun ModeMessage(mode: TimerMode, isRunning: Boolean, hasStarted: Boolean) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        when {
+            !hasStarted -> {
+                Text("POMOTIMER", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text("START WORKING", fontSize = 20.sp, color = Color.Gray)
+            }
+            isRunning && mode == TimerMode.WORK -> {
+                Text("IT'S TIME TO FOCUS", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            }
+            isRunning && mode == TimerMode.BREAK -> {
+                Text("GREAT, LET'S TAKE BREAK", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            }
+            !isRunning -> {
+                Text("TIMER PAUSED", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            }
 
-        Text(
-            text = message,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFFE83944)
-        )
+        }
     }
 }
 
@@ -210,7 +284,8 @@ fun SessionCounter(sessionsPassed: Int) {
             text = "Sessions Completed: $sessionsPassed",
             fontSize = 16.sp,
             modifier = Modifier.padding(top = 8.dp),
-            color = Color.Gray
+            color = Color.White,
+            fontWeight = FontWeight.Bold
         )
     }
 }
@@ -238,7 +313,7 @@ fun TimerCard(minutes: Int, seconds: Int, cardColor: Color) {
                 text = String.format(Locale.US, "%02d:%02d", minutes, seconds),
                 fontSize = 48.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = Color(0xFFE83944)
             )
         }
     }
@@ -264,7 +339,7 @@ fun StartPauseButton(isRunning: Boolean, onClick: () -> Unit) {
             containerColor = Color(0xFFEE7879),
             contentColor = Color.White
         ),
-        border = BorderStroke(2.dp, Color(0xFFE83944))
+        border = BorderStroke(2.dp, Color.White)
     ) {
         Text(
             if (isRunning) "Pause" else "Start",
@@ -281,7 +356,7 @@ fun ResetButton(onClick: () -> Unit) {
             containerColor = Color(0xFFEE7879),
             contentColor = Color.White
         ),
-        border = BorderStroke(2.dp, Color(0xFFE83944))
+        border = BorderStroke(2.dp, Color.White)
     ) {
         Text(
             "Reset",
