@@ -27,6 +27,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -88,10 +89,39 @@ fun PomoApp() {
         targetValue = when {
             !hasStarted -> Color.White
             mode == TimerMode.WORK -> Color(0xFFE83944)
-            mode == TimerMode.BREAK -> Color(0XFF6DCAF3)
+            mode == TimerMode.BREAK -> Color(0XFF003D5F)
             else -> Color.White
         },
         animationSpec = tween(durationMillis = 1000)
+    )
+
+    val textFieldColors = TextFieldDefaults.colors(
+        focusedContainerColor = Color.Transparent,
+        unfocusedContainerColor = Color.Transparent,
+        focusedTextColor = when {
+            !hasStarted -> Color.Black
+            mode == TimerMode.WORK -> Color.White
+            mode == TimerMode.BREAK -> Color.White
+            else -> Color.Black
+        },
+        unfocusedTextColor = when {
+            !hasStarted -> Color.Black
+            mode == TimerMode.WORK -> Color.White
+            mode == TimerMode.BREAK -> Color.White
+            else -> Color.Black
+        },
+        focusedIndicatorColor = when {
+            !hasStarted -> Color.Black
+            mode == TimerMode.WORK -> Color.White
+            mode == TimerMode.BREAK -> Color.White
+            else -> Color.Black
+        },
+        unfocusedIndicatorColor = when {
+            !hasStarted -> Color.Black
+            mode == TimerMode.WORK -> Color.White
+            mode == TimerMode.BREAK -> Color.White
+            else -> Color.Black
+        }
     )
 
     // When mode changes, reset the timer based on the mode
@@ -142,18 +172,38 @@ fun PomoApp() {
             OutlinedTextField(
                 value = focusInput,
                 onValueChange = { focusInput = it },
-                label = { Text("Set Focus Time (min)") },
+                label = { Text(
+                    "Set Focus Time (min)",
+                    color = when {
+                        !hasStarted -> Color.Black
+                        mode == TimerMode.WORK -> Color.White
+                        mode == TimerMode.BREAK -> Color.White
+                        else -> Color.Black
+                    }
+                )},
                 singleLine = true,
+                shape = RoundedCornerShape(8.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                colors = textFieldColors,
                 modifier = Modifier
                     .padding(16.dp)
             )
             OutlinedTextField(
                 value = breakInput,
                 onValueChange = { breakInput = it },
-                label = { Text("Set Break Time (min)") },
+                label = { Text(
+                    "Set Break Time (min)",
+                    color = when {
+                        !hasStarted -> Color.Black
+                        mode == TimerMode.WORK -> Color.White
+                        mode == TimerMode.BREAK -> Color.White
+                        else -> Color.Black
+                    }
+                )},
                 singleLine = true,
+                shape = RoundedCornerShape(8.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                colors = textFieldColors,
                 modifier = Modifier
                     .padding(16.dp)
             )
